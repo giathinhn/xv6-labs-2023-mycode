@@ -1,0 +1,16 @@
+Q: Why are there missing keys with 2 threads, but not with 1 thread? Identify a sequence of events with 2 threads that can lead to a key being missing. Submit your sequence with a short explanation in answers-thread.txt.
+
+A: 
+Với 1 thread, các thao tác put() lên bảng băm được thực hiện tuần tự, nên không có sự xen kẽ giữa các bước đọc và ghi dữ liệu. Vì vậy, không xảy ra race condition và không có key nào bị mất.
+Với 2 thread, các thread có thể đồng thời thực hiện put() trên cùng một bucket của bảng băm. Do không có cơ chế khóa, các thao tác cập nhật danh sách liên kết trong bucket có thể bị xen kẽ, dẫn đến race condition và làm mất key.
+
+Chuỗi sự kiện dẫn đến mất key (ví dụ):
+Thread T1 đọc con trỏ đầu của bucket table[i].
+Thread T2 cũng đọc cùng con trỏ table[i].
+T1 tạo một node mới và gán next của node này trỏ tới giá trị table[i] vừa đọc.
+T2 cũng tạo một node mới và gán next trỏ tới cùng giá trị table[i].
+T1 ghi table[i] trỏ tới node mới của mình.
+T2 ghi đè table[i] trỏ tới node mới của T2, làm node do T1 vừa chèn bị mất khỏi danh sách.
+
+Giải thích ngắn gọn cho ví dụ:
+Do hai thread cùng lúc đọc và ghi vào cùng một bucket mà không có mutex bảo vệ, lần ghi sau có thể ghi đè kết quả của lần ghi trước, dẫn đến missing keys.
